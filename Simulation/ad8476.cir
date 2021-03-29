@@ -1,0 +1,228 @@
+* AD8476 SPICE Macro-model
+* Description: Amplifier
+* Generic Desc: Low Power, Unity Gain (resistors integrated), Fully Differential Precision Amplifier and ADC driver.
+* Developed by: ADI - LPT
+* 
+* Revision History:
+* 0(05/2012) - BZ (Initial Rev)
+* A(11/2012) - FB (Modified pinout to match datasheet. Fixed errors from first rev.)
+* B(01/2015) - SH (Bug fixes and performance improvements.)
+* Copyright 2012 by Analog Devices, Inc.
+* 
+* Refer to http://www.analog.com/Analog_Root/static/techSupport/designTools/spiceModels/license/spice_general.html for License Statement. Use of this model
+* indicates your acceptance of the terms and provisions in the License Statement.
+*
+*
+* BEGIN Notes:
+*
+* Not Modeled:
+*   Temperature effects
+*   Harmonic Distortion
+*
+* Parameters modeled include:
+*   Supply current incl load
+*   Offset voltage
+*   PSRR vs frequency
+*   Output swing vs load
+*   Input Common-Mode Voltage Range
+*   Bandwidth
+*   Pulse Response variation with cap load
+*   Noise incl 1/f
+*   VOCM Bandwidth
+*   Slew rate
+*   Gain error and gain resistance
+*
+* Supply range:
+*    Single Supply: 3V to 18V
+*    Dual Supplies: +/-1.5V to +/-9V
+*
+* END Notes
+*
+* Node assignments
+*                Negative input
+*                |     Postive Supply
+*                |     |    Output Common Mode Adjust
+*                |     |    |     Non-inverting Output
+*                |     |    |     |    Inverting Output
+*                |     |    |     |    |    No connect
+*                |     |    |     |    |    |    Negative Supply
+*                |     |    |     |    |    |    |    Positive Input
+*                |     |    |     |    |    |    |    |   
+*                |     |    |     |    |    |    |    |     
+*                |     |    |     |    |    |    |    |   
+.SUBCKT AD8476  INN  +VS  VOCM  +OUT  -OUT  NC  -VS  INP  
+*
+*** GAIN RESISTORS AND INPUT CLAMPS ***
+R1 4 INP 9.999e3
+R2 16 INN 9.999e3
+VSNS4 VX2 131 0
+R14 131 16 10.000075870868e3
+VSNS3 VX1 130 0
+R15 130 4 10.00001131331e3
+*
+DC1 4 110 DX
+V6 VP 110 1.05
+DC2 111 4 DX
+V7 111 VN 0.05
+*
+*** DIFFERENTIAL GAIN AND DOMINANT POLE ***
+G1 13 18 4 16 -.00043
+R16 13 18 1e9
+G3 0 VX1 VMID 13 .0063
+G4 0 VX2 VMID 18 .0063
+C1 9 13 21.0e-12
+C2 23 18 21.0e-12
+R19 VX1 9 200
+R20 VX2 23 200
+R11 VX1 0 1e9
+R12 0 VX2 1e9
+*
+*** COMMON-MODE GAIN AND VOCM BW ***
+E5_VOCM_ERROR 32 VOCM VOCM 0 .2e-3
+R7 +VS 32 1e6
+R8 32 -VS 1e6
+V3 31 32 -10e-6
+E1_balance 30 31 +OUT -OUT 99.7927e-6
+R5 15 VX2 25e3
+R6 VX1 15 25e3
+G2 0 18 15 30 .00015
+R9 18 0 1e9
+C3 18 0 1e-18
+G5 0 13 15 30 .00015
+R10 13 0 1e9
+C4 13 0 1e-18
+*
+*** NOISE ***
+V_Noise 1 0 0
+R13 1 0 .0166
+DN1 2 1 DN
+VN1 0 2 0.2
+H1_Noise -OUT 8 V_Noise -15.2
+H2_Noise +OUT 27 V_Noise 15.2
+*
+*** CMRR SECTION ***
+R34 40 0 2
+C11 40 39 100e-9
+R35 48 0 2
+C12 48 41 100e-9
+E11 39 0 42 0 1
+R36 40 39 1000
+E12 41 0 40 0 1
+R37 48 41 1000
+R38 44 0 2
+C13 44 43 20e-9
+R39 46 0 2
+C14 46 45 20e-9
+E13 43 0 42 0 1
+R40 44 43 1000
+E14 45 0 44 0 1
+R41 46 45 1000
+E15 12 11 46 0 -7e-4
+E16 26 25 48 0 7e-4
+R44 INP 42 1e6
+R45 42 INN 1e6
+*
+*** PSRR SECTION ***
+R23 34 0 46
+C5 34 33 1e-9
+R27 47 0 46
+C8 47 35 1e-9
+E4 33 0 +VS -VS 1
+R21 34 33 1000
+E5 35 0 34 0 1
+R22 47 35 1000
+R24 37 0 46
+C6 37 36 1e-9
+R25 49 0 46
+C7 49 38 1e-9
+E3 36 0 +VS -VS 1
+R26 37 36 1000
+E6 38 0 37 0 1
+R28 49 38 1000
+E7 11 10 49 0 -8.173e-3
+E8 25 24 47 0 8.173e-3
+*
+*** REFERENCE AND SUPPLY CURRENT ***
+GSY +VS -VS POLY(1) +VS -VS 270.375e-6 4.925e-6
+DZS1 101 +VS DZ
+DZS2 -VS 102 DZ
+FS1 100 0 VSNS1 -1
+DSP1 101 106 DX
+VSRCP 106 100 0
+DSN1 107 102 DX
+VSNKP 100 107 0
+FS2 103 0 VSNS2 -1
+DSP2 101 108 DX
+VSRCN 108 103 0
+DSN2 109 102 DX
+VSNKN 103 109 0
+FS3 104 0 VSNS3 1
+DSP3 101 104 DX
+DSN3 104 102 DX
+FS4 105 0 VSNS4 1
+DSP4 101 105 DX
+DSN4 105 102 DX
+*
+EMID VMID 0 POLY(2) +VS 0 -VS 0 0 0.5 0.5
+EVP VP 0 +VS 0 1
+EVN 0 VN 0 -VS 1
+*
+*** SLEW RATE ***
+G10 0 VZ1 VX1 VY1 1e-3
+RZ1 0 VZ1 1e9
+DSLEW1 VC1 0 DZ
+DSLEW2 VC1 VZ1 DZ
+GZ1 0 VY1 VZ1 0 200e-9
+C10 0 VY1 1e-12
+R33 VY1 0 1e9
+E9 6 0 VY1 0 1
+*
+G11 0 VZ2 VX2 VY2 1e-3
+RZ2 0 VZ2 1e9
+DSLEW3 VC2 0 DZ
+DSLEW4 VC2 VZ2 DZ
+GZ2 0 VY2 VZ2 0 200e-9
+C9 0 VY2 1e-12
+R31 VY2 0 1e9
+E10 20 0 VY2 0 1
+*
+*** OUTPUT STAGE WITH EXTRA POLES AND CAP RESPONSE ***
+VOS- 10 6 27.158e-6
+VOS+ 24 20 -27.158e-6
+VSNS2 8 5 0
+VSNS1 27 22 0
+D1 21 19 DX
+D2 28 21 DX
+D3 140 7 DX
+D4 7 141 DX
+H1 28 VN POLY(1) VSNKP 0.16 0 2041
+H2 VP 19 POLY(1) VSRCP 0.185 0 2041
+H3 140 VN POLY(1) VSNKN 0.16 0 2041
+H4 VP 141 POLY(1) VSRCN 0.185 0 2041
+*
+G8 0 120 7 5 1
+R50 120 0 1e9
+C50 120 0 15.75e-9
+G9 0 5 120 0 2.5e-3
+R51 5 0 400
+C51 5 0 114e-12
+G12 0 121 21 22 1
+R52 121 0 1e9
+C52 121 0 15.75e-9
+G13 0 22 121 0 2.5e-3
+R53 22 0 400
+C53 22 0 114e-12
+*
+G6 0 7 12 0 1e-3
+G7 0 21 26 0 1e-3
+R29 7 0 1e3
+R30 21 0 1e3
+*
+R32 NC 0 1e6
+*
+.MODEL DX D(IS=1e-15 N=0.1)
+.MODEL DN D(IS=1e-15 KF=8.17e-5)
+.MODEL DZ D(IS=1e-15 BV=24.5 RS=0.1)
+*
+.ends AD8476
+*$
